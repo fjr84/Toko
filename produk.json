@@ -1,0 +1,97 @@
+import json # Impor modul json
+
+# --- 1. Definisi Kelas Produk (Sama seperti sebelumnya) ---
+class Produk:
+    def __init__(self, id_produk, nama, harga, stok):
+        self.id_produk = id_produk
+        self.nama = nama
+        self.harga = harga
+        self.stok = stok
+
+    def __str__(self):
+        return f"ID: {self.id_produk}, Nama: {self.nama}, Harga: Rp{self.harga:,.2f}, Stok: {self.stok}"
+
+    # Metode untuk mengonversi objek Produk menjadi dictionary (agar bisa disimpan sebagai JSON)
+    def to_dict(self):
+        return {
+            "id_produk": self.id_produk,
+            "nama": self.nama,
+            "harga": self.harga,
+            "stok": self.stok
+        }
+
+    # Metode statis untuk membuat objek Produk dari dictionary (saat memuat dari JSON)
+    @staticmethod
+    def from_dict(data):
+        return Produk(data["id_produk"], data["nama"], data["harga"], data["stok"])
+
+# --- (Kelas ItemPesanan dan Pesanan akan diabaikan dulu untuk fokus pada Produk + JSON) ---
+# --- Fungsi untuk menyimpan dan memuat data produk ---
+
+def simpan_produk_ke_json(daftar_produk, nama_file="produk.json"):
+    """Menyimpan daftar objek Produk ke file JSON."""
+    data_untuk_disimpan = [produk.to_dict() for produk in daftar_produk]
+    try:
+        with open(nama_file, 'w', encoding='utf-8') as f:
+            json.dump(data_untuk_disimpan, f, indent=4)
+        print(f"Data produk berhasil disimpan ke '{nama_file}'")
+    except IOError as e:
+        print(f"Gagal menyimpan data produk: {e}")
+
+def muat_produk_dari_json(nama_file="produk.json"):
+    """Memuat daftar objek Produk dari file JSON."""
+    daftar_produk = []
+    try:
+        with open(nama_file, 'r', encoding='utf-8') as f:
+            data_dimuat = json.load(f)
+            for item_data in data_dimuat:
+                daftar_produk.append(Produk.from_dict(item_data))
+        print(f"Data produk berhasil dimuat dari '{nama_file}'")
+    except FileNotFoundError:
+        print(f"File '{nama_file}' tidak ditemukan. Membuat daftar produk kosong.")
+    except json.JSONDecodeError as e:
+        print(f"Error saat memuat JSON dari '{nama_file}': {e}. Membuat daftar produk kosong.")
+    except Exception as e:
+        print(f"Terjadi error tak terduga saat memuat produk: {e}")
+    return daftar_produk
+
+# --- Contoh Penggunaan ---
+if __name__ == "__main__":
+    # Mencoba memuat produk yang sudah ada
+    daftar_produk_saat_ini = muat_produk_dari_json()
+
+    # Jika belum ada produk (misalnya, baru pertama kali dijalankan)
+    if not daftar_produk_saat_ini:
+        print("\nTidak ada produk ditemukan, menambahkan beberapa produk baru.")
+        baju = Produk("P001", "Kaos Polos", 50000, 100)
+        celana = Produk("P002", "Celana Jeans", 150000, 50)
+        sepatu = Produk("P003", "Sepatu Sneakers", 250000, 20)
+        daftar_produk_saat_ini.extend([baju, celana, sepatu])
+    else:
+        print("\nProduk yang sudah ada:")
+        for p in daftar_produk_saat_ini:
+            print(p)
+
+    # Menambahkan produk baru (atau memodifikasi yang sudah ada)
+    print("\nMenambahkan/memodifikasi produk...")
+    new_item = Produk("P004", "Topi Baseball", 75000, 30)
+    # Cek apakah produk sudah ada, jika tidak tambahkan
+    if not any(p.id_produk == new_item.id_produk for p in daftar_produk_saat_ini):
+        daftar_produk_saat_ini.append(new_item)
+    else:
+        print(f"Produk dengan ID {new_item.id_produk} sudah ada.")
+        # Anda bisa menambahkan logika untuk memperbarui produk yang sudah ada di sini
+
+    # Menampilkan daftar produk setelah perubahan
+    print("\nDaftar Produk Setelah Perubahan:")
+    for p in daftar_produk_saat_ini:
+        print(p)
+
+    # Menyimpan daftar produk yang diperbarui
+    simpan_produk_ke_json(daftar_produk_saat_ini)
+
+    # Sekarang coba muat lagi untuk memastikan data tersimpan
+    print("\nMemuat ulang produk untuk verifikasi:")
+    produk_verifikasi = muat_produk_dari_json()
+    for p in produk_verifikasi:
+        print(p)
